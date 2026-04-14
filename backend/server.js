@@ -8,16 +8,7 @@ const app = express();
 app.use(cors());
 
 // ===== FILE STORAGE =====
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
-const upload = multer({ storage });
+const upload = multer({ storage: multer.memoryStorage() });
 
 // ===== FILE FIELDS =====
 const uploadFields = upload.fields([
@@ -35,7 +26,8 @@ const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: "lilliving02@gmail.com",
-    pass: "lkxcpunmfyapfwtr", // 🔴 replace this
+    //pass: "lkxcpunmfyapfwtr", // 🔴 replace this
+	pass: process.env.EMAIL_PASS,
   },
 });
 
@@ -46,16 +38,16 @@ app.post("/submit", uploadFields, async (req, res) => {
 
     let attachments = [];
 
-    if (req.files) {
-      Object.keys(req.files).forEach((field) => {
-        req.files[field].forEach((file) => {
-          attachments.push({
-            filename: file.originalname,
-            path: file.path,
-          });
-        });
-      });
-    }
+	if (req.files) {
+	  Object.keys(req.files).forEach((field) => {
+		req.files[field].forEach((file) => {
+		  attachments.push({
+			filename: file.originalname,
+			content: file.buffer,
+		  });
+		});
+	  });
+	}
 
     await transporter.sendMail({
       from: "lilliving02@gmail.com",
