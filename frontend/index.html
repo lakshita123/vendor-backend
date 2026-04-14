@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vendor Document Submission</title>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EmailJS SDK — handles email sending entirely on the frontend
+     No backend required. Your PUBLIC_KEY authenticates the SDK.
+     ═══════════════════════════════════════════════════════════ -->
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+<style>
+/* ══════════════════════════════════════
+   CSS VARIABLES — easy to theme later
+   ══════════════════════════════════════ */
+:root {
+  --bg:        #f0f2f7;
+  --surface:   #ffffff;
+  --surface2:  #f7f8fc;
+  --border:    #e3e6ef;
+  --accent:    #4f6ef7;
+  --accent2:   #7c3aed;
+  --success:   #059669;
+  --danger:    #dc2626;
+  --text:      #0f172a;
+  --muted:     #64748b;
+  --radius:    14px;
+  --shadow:    0 4px 24px rgba(79,110,247,.10), 0 1.5px 6px rgba(0,0,0,.06);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.07);
+  --font:      'Sora', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+}
+
+/* ══════════════════════════════════════
+   RESET & BASE
+   ══════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:24px 16px 60px;
+  line-height:1.6;
+}
+
+/* ══════════════════════════════════════
+   PAGE HEADER
+   ══════════════════════════════════════ */
+.page-header{
+  text-align:center;
+  margin-bottom:36px;
+}
+.page-header .badge{
+  display:inline-block;
+  background:linear-gradient(135deg,#e8eeff,#ede9ff);
+  color:var(--accent2);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:5px 14px;
+  border-radius:99px;
+  margin-bottom:14px;
+  border:1px solid #d4d8ff;
+}
+.page-header h1{
+  font-size:clamp(22px,4vw,34px);
+  font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  margin-bottom:8px;
+}
+.page-header p{
+  color:var(--muted);
+  font-size:14px;
+  font-weight:300;
+}
+
+/* ══════════════════════════════════════
+   CARD
+   ══════════════════════════════════════ */
+.card{
+  background:var(--surface);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+  max-width:760px;
+  margin:0 auto 28px;
+  overflow:hidden;
+}
+.card-header{
+  padding:20px 28px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:var(--surface2);
+}
+.card-header .icon{
+  width:36px;height:36px;
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;
+  flex-shrink:0;
+}
+.icon-blue{background:linear-gradient(135deg,#dbeafe,#eff6ff);}
+.icon-purple{background:linear-gradient(135deg,#ede9fe,#f5f3ff);}
+.card-header h2{font-size:15px;font-weight:600;color:var(--text);}
+.card-header p{font-size:12px;color:var(--muted);margin-top:1px;}
+.card-body{padding:24px 28px;}
+
+/* ══════════════════════════════════════
+   FORM ELEMENTS
+   ══════════════════════════════════════ */
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+@media(max-width:540px){.form-grid{grid-template-columns:1fr;}}
+.form-full{grid-column:1/-1;}
+
+.field{display:flex;flex-direction:column;gap:6px;}
+label{font-size:13px;font-weight:500;color:var(--text);}
+label .req{color:var(--accent);margin-left:2px;}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+select{
+  height:44px;
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:0 14px;
+  font-family:var(--font);
+  font-size:14px;
+  color:var(--text);
+  background:var(--surface);
+  outline:none;
+  transition:border-color .18s,box-shadow .18s;
+  width:100%;
+}
+input:focus,select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(79,110,247,.12);
+}
+input.error,select.error{
+  border-color:var(--danger);
+  box-shadow:0 0 0 3px rgba(220,38,38,.1);
+}
+.err-msg{
+  font-size:11px;
+  color:var(--danger);
+  display:none;
+  margin-top:2px;
+}
+.err-msg.show{display:block;}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2364748b' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+
+/* ══════════════════════════════════════
+   FILE UPLOAD FIELDS
+   ══════════════════════════════════════ */
+.file-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-top:4px;
+}
+@media(max-width:540px){.file-grid{grid-template-columns:1fr;}}
+
+.file-field{
+  border:1.5px dashed var(--border);
+  border-radius:10px;
+  padding:12px 14px;
+  background:var(--surface2);
+  transition:border-color .18s,background .18s;
+  cursor:pointer;
+  position:relative;
+}
+.file-field:hover{border-color:var(--accent);background:#f4f6ff;}
+.file-field label{
+  display:flex;flex-direction:column;gap:4px;
+  cursor:pointer;
+  font-size:12px;
+}
+.file-field .doc-name{
+  font-size:13px;font-weight:600;color:var(--text);
+}
+.file-field .doc-hint{
+  color:var(--muted);font-size:11px;font-weight:300;
+}
+.file-field input[type="file"]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+}
+.file-preview{
+  margin-top:7px;
+  font-size:11px;
+  color:var(--accent2);
+  font-family:var(--mono);
+  background:#f5f3ff;
+  border-radius:6px;
+  padding:5px 8px;
+  display:none;
+  word-break:break-all;
+  border:1px solid #ede9fe;
+}
+.file-preview.show{display:block;}
+
+/* ══════════════════════════════════════
+   SUBMIT BUTTON
+   ══════════════════════════════════════ */
+.btn-wrap{margin-top:28px;text-align:center;}
+button[type="submit"]{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:13px 40px;
+  font-family:var(--font);
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  box-shadow:0 4px 18px rgba(79,110,247,.35);
+  transition:transform .15s,box-shadow .15s,opacity .15s;
+  min-width:200px;
+  letter-spacing:.01em;
+}
+button[type="submit"]:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(79,110,247,.45);}
+button[type="submit"]:active{transform:scale(.98);}
+button[type="submit"]:disabled{opacity:.7;cursor:not-allowed;transform:none;}
+
+/* ══════════════════════════════════════
+   LOADER OVERLAY
+   ══════════════════════════════════════ */
+#loader{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(6px);
+  z-index:1000;
+  flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:20px;
+}
+#loader.show{display:flex;}
+.spinner{
+  width:52px;height:52px;
+  border-radius:50%;
+  border:4px solid #e0e4ff;
+  border-top-color:var(--accent);
+  border-right-color:var(--accent2);
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-text{
+  font-size:14px;font-weight:500;
+  color:var(--muted);
+  animation:pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+
+/* ══════════════════════════════════════
+   SUCCESS CARD
+   ══════════════════════════════════════ */
+#success-card{
+  display:none;
+  text-align:center;
+  max-width:480px;
+  margin:0 auto;
+  padding:48px 32px;
+  background:var(--surface);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  border:1px solid #d1fae5;
+  animation:fadeUp .4s ease;
+}
+#success-card.show{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.success-icon{
+  width:68px;height:68px;
+  background:linear-gradient(135deg,#d1fae5,#a7f3d0);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;
+  margin:0 auto 20px;
+  box-shadow:0 0 0 10px rgba(16,185,129,.08);
+}
+#success-card h2{font-size:20px;font-weight:700;color:var(--success);margin-bottom:8px;}
+#success-card p{font-size:14px;color:var(--muted);line-height:1.7;}
+.success-detail{
+  margin-top:18px;
+  background:#f0fdf4;
+  border-radius:10px;
+  padding:14px 16px;
+  font-size:12px;
+  color:#065f46;
+  font-family:var(--mono);
+  text-align:left;
+  border:1px solid #a7f3d0;
+  line-height:1.9;
+}
+.btn-new{
+  margin-top:22px;
+  background:transparent;
+  color:var(--accent);
+  border:1.5px solid var(--accent);
+  border-radius:10px;
+  padding:10px 28px;
+  font-family:var(--font);
+  font-size:14px;font-weight:600;
+  cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.btn-new:hover{background:var(--accent);color:#fff;}
+
+/* ══════════════════════════════════════
+   FOOTER
+   ══════════════════════════════════════ */
+footer{
+  text-align:center;
+  margin-top:40px;
+  font-size:11.5px;
+  color:var(--muted);
+  font-weight:300;
+}
+footer span{color:var(--accent);font-weight:500;}
+
+/* ══════════════════════════════════════
+   SECTION DIVIDER
+   ══════════════════════════════════════ */
+.divider{
+  border:none;
+  border-top:1px solid var(--border);
+  margin:22px 0;
+}
+</style>
+</head>
+<body>
+
+<!-- ──────────── PAGE HEADER ──────────── -->
+<div class="page-header">
+  <div class="badge">🏢 Vendor Portal</div>
+  <h1>Document Submission</h1>
+  <p>Securely share your vendor details and document information</p>
+</div>
+
+<!-- ──────────── MAIN FORM ──────────── -->
+<div id="form-wrapper">
+
+  <!-- Section 1: Vendor Information -->
+  <div class="card">
+    <div class="card-header">
+      <div class="icon icon-blue">👤</div>
+      <div>
+        <h2>Vendor Information</h2>
+        <p>Basic contact and vendor details</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <form id="vendorForm" novalidate>
+
+        <div class="form-grid">
+
+          <!-- Name -->
+          <div class="field form-full">
+            <label for="name">Full Name <span class="req">*</span></label>
+            <input type="text" id="name" name="name" placeholder="e.g. Rahul Sharma" autocomplete="name"/>
+            <span class="err-msg" id="name-err">Please enter your full name.</span>
+          </div>
+
+          <!-- Phone -->
+          <div class="field">
+            <label for="phone">Phone Number <span class="req">*</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="10-digit mobile number" maxlength="10" autocomplete="tel"/>
+            <span class="err-msg" id="phone-err">Enter a valid 10-digit phone number.</span>
+          </div>
+
+          <!-- Email -->
+          <div class="field">
+            <label for="email">Email Address <span class="req">*</span></label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email"/>
+            <span class="err-msg" id="email-err">Enter a valid email address.</span>
+          </div>
+
+          <!-- Vendor Dropdown -->
+          <div class="field form-full">
+            <label for="vendor">Select Vendor <span class="req">*</span></label>
+            <!--
+              FUTURE: To add more vendors, simply add <option> tags below.
+              For dynamic loading, replace options with JS fetch from an API/Firebase.
+            -->
+            <select id="vendor" name="vendor">
+              <option value="" disabled selected>— Choose vendor —</option>
+              <option value="Vendor 1">Vendor 1</option>
+              <option value="Vendor 2">Vendor 2</option>
+              <option value="Vendor 3">Vendor 3</option>
+            </select>
+            <span class="err-msg" id="vendor-err">Please select a vendor.</span>
+          </div>
+
+        </div><!-- /form-grid -->
+
+        <hr class="divider"/>
+
+        <!-- Section 2: Document Upload -->
+        <div style="margin-bottom:16px;">
+          <div class="card-header" style="border-radius:10px;margin-bottom:16px;padding:14px 18px;">
+            <div class="icon icon-purple">📁</div>
+            <div>
+              <h2>Document Upload</h2>
+              <pFiles will be uploaded and sent securelyr</p>
+            </div>
+          </div>
+
+          <div class="file-grid">
+
+            <!-- GST Registration -->
+            <div class="file-field" id="ff-gst-reg">
+              <label for="gst_reg">
+                <span class="doc-name">GST Registration</span>
+                <span class="doc-hint">PDF / Image — single file</span>
+              </label>
+              <input type="file" id="gst_reg" accept=".pdf,.jpg,.jpeg,.png" onchange="previewFile(this,'prev-gst-reg')"/>
+              <div class="file-preview" id="prev-gst-reg"></div>
+            </div>
+
+            <!-- GST Portal Details -->
+            <div class="file-field" id="ff-gst-portal">
+              <label for="gst_portal">
+                <span class="doc-name">GST Portal Details</span>
+                <span class="doc-hint">PDF / Image — single file</span>
+              </label>
+              <input type="file" id="gst_portal" accept=".pdf,.jpg,.jpeg,.png" onchange="previewFile(this,'prev-gst-portal')"/>
+              <div class="file-preview" id="prev-gst-portal"></div>
+            </div>
+
+            <!-- GST Account Details -->
+            <div class="file-field" id="ff-gst-acc">
+              <label for="gst_acc">
+                <span class="doc-name">GST Account Details</span>
+                <span class="doc-hint">PDF / Image — single file</span>
+              </label>
+              <input type="file" id="gst_acc" accept=".pdf,.jpg,.jpeg,.png" onchange="previewFile(this,'prev-gst-acc')"/>
+              <div class="file-preview" id="prev-gst-acc"></div>
+            </div>
+
+            <!-- Cheque -->
+            <div class="file-field" id="ff-cheque">
+              <label for="cheque">
+                <span class="doc-name">Cheque</span>
+                <span class="doc-hint">PDF / Image — single file</span>
+              </label>
+              <input type="file" id="cheque" accept=".pdf,.jpg,.jpeg,.png" onchange="previewFile(this,'prev-cheque')"/>
+              <div class="file-preview" id="prev-cheque"></div>
+            </div>
+
+            <!-- Aadhar -->
+            <div class="file-field" id="ff-aadhar">
+              <label for="aadhar">
+                <span class="doc-name">Aadhar</span>
+                <span class="doc-hint">PDF / Image — single file</span>
+              </label>
+              <input type="file" id="aadhar" accept=".pdf,.jpg,.jpeg,.png" onchange="previewFile(this,'prev-aadhar')"/>
+              <div class="file-preview" id="prev-aadhar"></div>
+            </div>
+
+            <!-- PAN -->
+            <div class="file-field" id="ff-pan">
+              <label for="pan">
+                <span class="doc-name">PAN Card</span>
+                <span class="doc-hint">PDF / Image — single file</span>
+              </label>
+              <input type="file" id="pan" accept=".pdf,.jpg,.jpeg,.png" onchange="previewFile(this,'prev-pan')"/>
+              <div class="file-preview" id="prev-pan"></div>
+            </div>
+
+            <!-- GST3B — multiple files -->
+            <div class="file-field" id="ff-gst3b" style="grid-column:1/-1;">
+              <label for="gst3b">
+                <span class="doc-name">GST3B Returns</span>
+                <span class="doc-hint">Multiple files allowed — hold Ctrl/Cmd to select several</span>
+              </label>
+              <input type="file" id="gst3b" accept=".pdf,.jpg,.jpeg,.png" multiple onchange="previewFile(this,'prev-gst3b',true)"/>
+              <div class="file-preview" id="prev-gst3b"></div>
+            </div>
+
+          </div><!-- /file-grid -->
+        </div>
+
+        <!-- Submit -->
+        <div class="btn-wrap">
+          <button type="submit" id="submitBtn">Submit Documents →</button>
+        </div>
+
+      </form>
+    </div>
+  </div><!-- /card -->
+
+</div><!-- /form-wrapper -->
+
+<!-- ──────────── SUCCESS CARD ──────────── -->
+<div id="success-card">
+  <div class="success-icon">✅</div>
+  <h2>Submission Successful!</h2>
+  <p>Your document details have been received.<br/>A confirmation has been sent to the team.</p>
+  <div class="success-detail" id="success-detail"></div>
+  <button class="btn-new" onclick="resetAll()">Submit Another Response</button>
+</div>
+
+<!-- ──────────── LOADER ──────────── -->
+<div id="loader">
+  <div class="spinner"></div>
+  <div class="loader-text">Sending your submission…</div>
+</div>
+
+<!-- ──────────── FOOTER ──────────── -->
+<footer>
+  Powered by <span>EmailJS</span> · No server required · Files never leave your device
+</footer>
+
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   EMAILJS SETUP
+   ─────────────────────────────────────────────────────────────
+   HOW IT WORKS:
+   1. EmailJS hosts a mail relay. Your PUBLIC_KEY authenticates
+      the browser SDK so no server is needed.
+   2. SERVICE_ID  → links to your email provider (Gmail etc.)
+      TEMPLATE_ID → the email template configured in EmailJS dashboard
+      PUBLIC_KEY  → found in EmailJS Account > API Keys
+   3. emailjs.send() compiles template variables and dispatches
+      the email directly from the browser.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════
+   FILE PREVIEW HELPER
+   NOTE: We ONLY capture file names / count — no file data is
+   read or sent anywhere. This is intentional (no backend).
+   ══════════════════════════════════════════════════════════════ */
+function previewFile(input, previewId, isMultiple = false) {
+  const preview = document.getElementById(previewId);
+  if (!input.files || input.files.length === 0) {
+    preview.textContent = '';
+    preview.classList.remove('show');
+    return;
+  }
+  if (isMultiple) {
+    const names = Array.from(input.files).map(f => f.name).join('\n');
+    preview.textContent = `${input.files.length} file(s) selected:\n${names}`;
+  } else {
+    preview.textContent = `📄 ${input.files[0].name}`;
+  }
+  preview.classList.add('show');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BUILD DOCUMENT SUMMARY STRING
+   Returns e.g. "GST Registration, PAN, GST3B (3 files)"
+   Only includes documents that were actually selected.
+   ══════════════════════════════════════════════════════════════ */
+function buildDocSummary() {
+  // Single-file documents: [inputId, display label]
+  const singleDocs = [
+    ['gst_reg',    'GST Registration'],
+    ['gst_portal', 'GST Portal Details'],
+    ['gst_acc',    'GST Account Details'],
+    ['cheque',     'Cheque'],
+    ['aadhar',     'Aadhar'],
+    ['pan',        'PAN'],
+  ];
+
+  const parts = [];
+
+  singleDocs.forEach(([id, label]) => {
+    const el = document.getElementById(id);
+    if (el && el.files && el.files.length > 0) {
+      parts.push(`${label} (${el.files[0].name})`);
+    }
+  });
+
+  // GST3B — multiple files
+  const gst3b = document.getElementById('gst3b');
+  if (gst3b && gst3b.files && gst3b.files.length > 0) {
+    parts.push(`GST3B (${gst3b.files.length} file${gst3b.files.length > 1 ? 's' : ''})`);
+  }
+
+  return parts.length > 0 ? parts.join('\n') : 'No documents selected';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   VALIDATION HELPERS
+   ══════════════════════════════════════════════════════════════ */
+function showError(fieldId, errId, show) {
+  const field = document.getElementById(fieldId);
+  const err   = document.getElementById(errId);
+  field.classList.toggle('error', show);
+  err.classList.toggle('show', show);
+}
+
+function validateForm() {
+  let valid = true;
+
+  // Name
+  const name = document.getElementById('name').value.trim();
+  if (!name) { showError('name','name-err',true); valid=false; }
+  else        { showError('name','name-err',false); }
+
+  // Phone — exactly 10 digits
+  const phone = document.getElementById('phone').value.trim();
+  if (!/^\d{10}$/.test(phone)) { showError('phone','phone-err',true); valid=false; }
+  else                          { showError('phone','phone-err',false); }
+
+  // Email
+  const email = document.getElementById('email').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('email','email-err',true); valid=false; }
+  else                                              { showError('email','email-err',false); }
+
+  // Vendor
+  const vendor = document.getElementById('vendor').value;
+  if (!vendor) { showError('vendor','vendor-err',true); valid=false; }
+  else          { showError('vendor','vendor-err',false); }
+
+  return valid;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FORM SUBMIT HANDLER
+   ══════════════════════════════════════════════════════════════ */
+
+
+document.getElementById('vendorForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  if (!validateForm()) return;
+
+  document.getElementById('loader').classList.add('show');
+  document.getElementById('submitBtn').disabled = true;
+
+  const formData = new FormData();
+
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const email = document.getElementById("email").value;
+  const vendor = document.getElementById("vendor").value;
+
+  formData.append("name", name);
+  formData.append("phone", phone);
+  formData.append("email", email);
+  formData.append("vendor", vendor);
+
+  const fields = ["gst_reg","gst_portal","gst_acc","cheque","aadhar","pan"];
+
+  fields.forEach(id => {
+    const file = document.getElementById(id).files[0];
+    if(file){
+      formData.append(id, file);
+    }
+  });
+
+  const gst3bFiles = document.getElementById("gst3b").files;
+  for(let i = 0; i < gst3bFiles.length; i++){
+    formData.append("gst3b", gst3bFiles[i]);
+  }
+
+  try {
+    const res = await fetch("http://localhost:5000/submit", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    document.getElementById('loader').classList.remove('show');
+
+    if(data.success){
+      document.getElementById('form-wrapper').style.display = 'none';
+
+      const sc = document.getElementById('success-card');
+      document.getElementById('success-detail').innerHTML =
+        `<strong>Name:</strong> ${name}<br/>` +
+        `<strong>Phone:</strong> ${phone}<br/>` +
+        `<strong>Email:</strong> ${email}<br/>` +
+        `<strong>Vendor:</strong> ${vendor}`;
+      sc.classList.add('show');
+
+      window.scrollTo({top:0,behavior:'smooth'});
+    } else {
+      alert("Submission Failed");
+    }
+
+  } catch(err){
+    document.getElementById('loader').classList.remove('show');
+    alert("Server Error");
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   RESET / SUBMIT ANOTHER
+   ══════════════════════════════════════════════════════════════ */
+function resetAll() {
+  // Hide success, show form
+  document.getElementById('success-card').classList.remove('show');
+  document.getElementById('form-wrapper').style.display = '';
+
+  // Reset form fields
+  document.getElementById('vendorForm').reset();
+
+  // Clear all file previews
+  document.querySelectorAll('.file-preview').forEach(el => {
+    el.textContent = '';
+    el.classList.remove('show');
+  });
+
+  // Clear any error states
+  document.querySelectorAll('input,select').forEach(el => el.classList.remove('error'));
+  document.querySelectorAll('.err-msg').forEach(el => el.classList.remove('show'));
+
+  // Re-enable submit button
+  document.getElementById('submitBtn').disabled = false;
+
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LIVE PHONE VALIDATION — allow digits only
+   ══════════════════════════════════════════════════════════════ */
+document.getElementById('phone').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g,'').slice(0,10);
+});
+
+/*
+  ══════════════════════════════════════════════════════════════
+  FUTURE INTEGRATION NOTES
+  ──────────────────────────────────────────────────────────────
+  1. FIREBASE FILE UPLOAD:
+     - Import Firebase SDK
+     - On submit, loop through file inputs and call:
+         const ref = storage.ref(`vendors/${vendor}/${file.name}`);
+         await ref.put(file);
+         const url = await ref.getDownloadURL();
+     - Pass URLs in templateParams to EmailJS template
+
+  2. BACKEND INTEGRATION:
+     - Replace emailjs.send() with:
+         await fetch('/api/submit', { method:'POST', body: formData })
+     - Send files via FormData
+     - Handle emails server-side (Nodemailer, SendGrid, etc.)
+
+  3. ADDING MORE VENDORS:
+     - Add <option value="Vendor 4">Vendor 4</option> in the select
+     - Or fetch vendor list dynamically from Firebase/API on page load
+  ══════════════════════════════════════════════════════════════
+*/
+</script>
+</body>
+</html>
