@@ -6,6 +6,12 @@ const path = require("path");
 
 const app = express();
 app.use(cors());
+app.use(express.static("public"));
+
+
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/public/index.html");
+});
 
 // ===== FILE STORAGE =====
 const upload = multer({ storage: multer.memoryStorage() });
@@ -70,6 +76,6 @@ Vendor: ${vendor}
 });
 
 // ===== START SERVER =====
-app.listen(5000, () => {
+app.listen(5000, "0.0.0.0", () => {
   console.log("Server running at http://localhost:5000");
 });
